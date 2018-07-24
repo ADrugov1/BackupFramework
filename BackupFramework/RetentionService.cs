@@ -13,8 +13,8 @@
         {
             Policies = new List<Policy> {
                 new Policy(int.Parse(appSettings["ThreeDaysCount"]), int.Parse(appSettings["ThreeDaysInterval"])),
-                //new Policy(int.Parse(appSettings["OneWeekCount"]), int.Parse(appSettings["OneWeekInterval"])),
-                //new Policy(int.Parse(appSettings["TwoWeekCount"]), int.Parse(appSettings["TwoWeekInterval"]))
+                new Policy(int.Parse(appSettings["OneWeekCount"]), int.Parse(appSettings["OneWeekInterval"])),
+                new Policy(int.Parse(appSettings["TwoWeekCount"]), int.Parse(appSettings["TwoWeekInterval"]))
             };
         }
         public void Action()
