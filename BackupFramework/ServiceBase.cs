@@ -2,7 +2,7 @@
 {
     using System;
     using System.Collections.Specialized;
-    abstract public class ServiceBase
+    public class ServiceBase
     {
         public static string CONST_BackupPath = @"C:/Backup/";
         protected int backupCount;
