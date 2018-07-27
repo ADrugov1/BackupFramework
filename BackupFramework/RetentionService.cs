@@ -5,17 +5,18 @@
     using System.IO;
     using System.Linq;
 
-    public class RetentionService : ServiceBase
+    public class RetentionService
     {
-        private List<Policy> Policies = new List<Policy>();
+        private const string CONST_BackupPath = @"C:\Backup\";
+        private List<Policy> Policies;
+        private string backupPath;
+        private int checkInterval;
 
-        public RetentionService(): base()
+        public RetentionService(string path, int interval, List<Policy> policies)
         {
-            Policies = new List<Policy> {
-                new Policy(int.Parse(appSettings["ThreeDaysCount"]), int.Parse(appSettings["ThreeDaysInterval"])),
-                new Policy(int.Parse(appSettings["OneWeekCount"]), int.Parse(appSettings["OneWeekInterval"])),
-                new Policy(int.Parse(appSettings["TwoWeekCount"]), int.Parse(appSettings["TwoWeekInterval"]))
-            };
+            Policies = CheckPolicies(policies); 
+            checkInterval = interval > 0 ? interval : 1;
+            backupPath = String.IsNullOrEmpty(path) ? CONST_BackupPath : path;
         }
         public void Action()
         {
@@ -24,9 +25,9 @@
             while (true)
             {
                 var time = DateTime.Now;
-                var interval = (time - previousCleaningTime).Seconds;
+                var interval = (time - previousCleaningTime).Days;
 
-                if (interval > timesMultiplier * backupInterval / backupCount)
+                if (interval > checkInterval)
                 {
                     previousCleaningTime = time;
 
@@ -38,20 +39,37 @@
             }
         }
 
-        private void DeleteOldBackups(List<FileInfo> files, List<Policy> policies)
+        private void DeleteOldBackups(List<FileInfo> files, IEnumerable<Policy> policies)
         {
             var now = DateTime.UtcNow;
 
             foreach(var policy in policies)
             { 
-                var olderBackups = files.Where(f => (now - f.CreationTimeUtc).Seconds > policy.Interval * timesMultiplier).OrderByDescending(f => f.CreationTimeUtc).ToArray();
-                for (var i = policy.Count; i < olderBackups.Length; i++)
+                var olderBackups = files.Where(f => (now - f.CreationTimeUtc).Days > policy.Interval).OrderByDescending(f => f.CreationTimeUtc).ToList();
+                for (var i = policy.BackupCount; i < olderBackups.Count; i++)
                 {
                     files.Remove(olderBackups[i]);
                     File.Delete(olderBackups[i].FullName);
                     Console.WriteLine("Delete backup older {0} days {1}", policy.Interval, olderBackups[i].FullName);
                 }
             }
+        }
+
+        public List<Policy> CheckPolicies(List<Policy> policies)
+        {
+            if (policies == null || policies.Count == 0) return new List<Policy>();
+
+            policies = policies.OrderByDescending(x => x.Interval).ToList();
+
+            for (var i = 1;  i < policies.Count; i++)
+            {
+                if (policies[i].BackupCount < policies[i - 1].BackupCount)
+                {
+                    policies.Remove(policies[i]);
+                    i--;
+                }
+            }
+            return policies;
         }
     }
 }

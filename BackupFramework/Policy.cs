@@ -2,14 +2,12 @@
 {
     public class Policy
     {
-        private int count;
-        private int interval;
-        public int Count { get { return count; } }
-        public int Interval { get { return interval; } }
-        public Policy(int count, int interval)
+        public int BackupCount { get; }
+        public int Interval { get; }
+        public Policy(int interval, int count)
         {
-            this.count = count;
-            this.interval = interval;
+            BackupCount = count;
+            Interval = interval;
         }
     }
 }
