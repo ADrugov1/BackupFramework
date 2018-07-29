@@ -8,15 +8,14 @@
     public class RetentionService
     {
         private const string CONST_BackupPath = @"C:\Backup\";
-        private List<Policy> Policies;
+        public List<Policy> Policies { get; private set; } = new List<Policy>();
         private string backupPath;
         private int checkInterval;
 
-        public RetentionService(string path, int interval, List<Policy> policies)
+        public RetentionService(int interval = 1, string path = CONST_BackupPath)
         {
-            Policies = CheckPolicies(policies); 
             checkInterval = interval > 0 ? interval : 1;
-            backupPath = String.IsNullOrEmpty(path) ? CONST_BackupPath : path;
+            backupPath = string.IsNullOrEmpty(path) ? CONST_BackupPath : path;
         }
         public void Action()
         {
@@ -30,20 +29,18 @@
                 if (interval > checkInterval)
                 {
                     previousCleaningTime = time;
-
-                    DirectoryInfo dir = new DirectoryInfo(CONST_BackupPath);
-                    var files = dir.GetFiles().ToList();
-
-                    DeleteOldBackups(files, Policies);
+                    DeleteOldBackups(backupPath);
                 }
             }
         }
 
-        private void DeleteOldBackups(List<FileInfo> files, IEnumerable<Policy> policies)
+        internal void DeleteOldBackups(string path = CONST_BackupPath)
         {
+            var dir = new DirectoryInfo(path);
+            var files = dir.GetFiles().ToList();
             var now = DateTime.UtcNow;
 
-            foreach(var policy in policies)
+            foreach (var policy in Policies)
             { 
                 var olderBackups = files.Where(f => (now - f.CreationTimeUtc).Days > policy.Interval).OrderByDescending(f => f.CreationTimeUtc).ToList();
                 for (var i = policy.BackupCount; i < olderBackups.Count; i++)
@@ -55,21 +52,42 @@
             }
         }
 
-        public List<Policy> CheckPolicies(List<Policy> policies)
+        public void CheckPolicies()
         {
-            if (policies == null || policies.Count == 0) return new List<Policy>();
+            Policies = Policies.OrderByDescending(x => x.Interval).ToList();
 
-            policies = policies.OrderByDescending(x => x.Interval).ToList();
-
-            for (var i = 1;  i < policies.Count; i++)
+            for (var i = 1; i < Policies.Count; i++)
             {
-                if (policies[i].BackupCount < policies[i - 1].BackupCount)
+                if (Policies[i].Interval == Policies[i - 1].Interval)
                 {
-                    policies.Remove(policies[i]);
+                    if (Policies[i].BackupCount < Policies[i - 1].BackupCount)
+                    {
+                        Policies.Remove(Policies[i]);
+                    }
+                    else
+                    {
+                        Policies.Remove(Policies[i - 1]);
+                    }
+                    i--;
+                    continue;
+                }
+                if (Policies[i].BackupCount < Policies[i - 1].BackupCount)
+                {
+                    Policies.Remove(Policies[i]);
                     i--;
                 }
             }
-            return policies;
+        }
+
+        public void Add(Policy policy)
+        {
+            Policies.Add(policy);
+            CheckPolicies();
+        }
+        public void Add(List<Policy> policies)
+        {
+            Policies.AddRange(policies);
+            CheckPolicies();
         }
     }
 }

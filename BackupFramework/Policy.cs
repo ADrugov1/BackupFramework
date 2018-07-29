@@ -1,4 +1,6 @@
-﻿namespace BackupFramework
+﻿using System;
+
+namespace BackupFramework
 {
     public class Policy
     {

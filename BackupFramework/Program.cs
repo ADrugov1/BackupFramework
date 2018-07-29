@@ -12,15 +12,14 @@
 
              var policies = new List<Policy>() //// Keep no more than COUNT backups older than INTERVAL days;
              {
-                 new Policy(4, 1),//// conflict. Will be deleted
-                 new Policy(3, 12),
-                 new Policy(2, 9),
-                 new Policy(1, 10),
-                 new Policy(7, 1)//// conflict. Will be deleted
+                 new Policy(14, 1),
+                 new Policy(7, 4),
+                 new Policy(3, 4)
              };
 
             var backupService = new BackupService(backupPath, 5, 2);
-            var retentionService = new RetentionService(backupPath, 1,policies);
+            var retentionService = new RetentionService(1, backupPath);
+            retentionService.Add(policies);
 
             Parallel.Invoke(backupService.Action, retentionService.Action);
         }
