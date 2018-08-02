@@ -90,6 +90,61 @@
             Directory.Delete(path, true);
         }
 
+        [Test]
+        public void DeleteOldBackups_ShouldNotDeleteFiles_IfPolicyIsEmpty()
+        {
+            //// Arrange
+            var policies = new List<Policy>();
+
+            var sut = new RetentionService();
+            var path = @"C:/BackupTest/";
+            var dir = new DirectoryInfo(path);
+
+            dir.Create();
+            sut.Add(policies);
+
+            var count = 5;
+            for (var i = 0; i < count; i++) CreateTestFile(path + "File" + i + ".txt", interval + 1);
+
+            ////Act
+            sut.DeleteOldBackups(path);
+
+            ////Assert
+            Assert.AreEqual(count, dir.GetFiles().Count());
+
+            Directory.Delete(path, true);
+        }
+
+        [Test]
+        public void DeleteOldBackups_ShouldDeleteFiles_IfNotSatisfyMultiplyPlolicy()
+        {
+            //// Arrange
+            var policies = new List<Policy>() {
+                 new Policy(14, 1),
+                 new Policy(7, 4),
+                 new Policy(3, 4)};
+
+            var sut = new RetentionService();
+            var path = @"C:/BackupTest/";
+            var dir = new DirectoryInfo(path);
+
+            dir.Create();
+            sut.Add(policies);
+
+            for (var i = 0; i < 3; i++) CreateTestFile(path + "File" + i + ".txt", 15);
+            for (var i = 3; i < 6; i++) CreateTestFile(path + "File" + i + ".txt", 8);
+            for (var i = 6; i < 9; i++) CreateTestFile(path + "File" + i + ".txt", 5);
+            for (var i = 9; i < 12; i++) CreateTestFile(path + "File" + i + ".txt", 2);
+
+            ////Act
+            sut.DeleteOldBackups(path);
+
+            ////Assert
+            Assert.AreEqual(7, dir.GetFiles().Count());
+
+            Directory.Delete(path, true);
+        }
+
         private void CreateTestFile(string fileName, int daysBefore)
         {
             File.Create(fileName).Close();

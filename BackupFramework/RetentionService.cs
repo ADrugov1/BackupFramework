@@ -4,10 +4,12 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
 
     public class RetentionService
     {
         private const string CONST_BackupPath = @"C:\Backup\";
+        private const int CONST_MillisecondsInDay = 86400000;
         public List<Policy> Policies { get; private set; } = new List<Policy>();
         private string backupPath;
         private int checkInterval;
@@ -20,17 +22,10 @@
         public void Action()
         {
             Console.WriteLine("RetentionService action START");
-            var previousCleaningTime = DateTime.Now;
             while (true)
             {
-                var time = DateTime.Now;
-                var interval = (time - previousCleaningTime).Days;
-
-                if (interval > checkInterval)
-                {
-                    previousCleaningTime = time;
-                    DeleteOldBackups(backupPath);
-                }
+                Thread.Sleep(CONST_MillisecondsInDay * checkInterval);
+                DeleteOldBackups(backupPath);
             }
         }
 

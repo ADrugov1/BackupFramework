@@ -20,7 +20,6 @@
             var backupService = new BackupService(backupPath, 5, 2);
             var retentionService = new RetentionService(1, backupPath);
             retentionService.Add(policies);
-
             Parallel.Invoke(backupService.Action, retentionService.Action);
         }
     }

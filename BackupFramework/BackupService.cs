@@ -3,10 +3,12 @@
     using System;
     using System.IO;
     using System.Text;
+    using System.Threading;
+
     public class BackupService
     {
         private const string CONST_BackupPath = @"C:\Backup\";
-
+        private const int CONST_MillisecondsInDay = 86400000;
         private string backupPath;
         private int backupInterval;
         private int backupCount;
@@ -32,16 +34,11 @@
         {
             Console.WriteLine("BackupService action START");
 
-            var previousBackupTime = DateTime.Now;
+            var interval = CONST_MillisecondsInDay * backupInterval / backupCount;
             while (true)
             {
-                var time = DateTime.Now;
-                var interval = (time - previousBackupTime).Days;
-                if ( interval > backupInterval / backupCount)
-                {
-                    previousBackupTime = time;
-                    CreateBackup();
-                }
+                Thread.Sleep(interval);
+                CreateBackup();
             }
         }
     }
